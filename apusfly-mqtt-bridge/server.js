@@ -14,17 +14,23 @@ client.on("connect", () => {
     console.log("MQTT Connected ✔");
 });
 
-// 🔥 HEALTH CHECK ROUTE (VERY IMPORTANT)
+// 🔥 HEALTH CHECK ROUTE
 app.get("/", (req, res) => {
     res.send("ApusFly MQTT Bridge is running ✔");
 });
 
-// publish endpoint
+// publish endpoint (UPDATED WITH DEBUG)
 app.post("/publish", (req, res) => {
+
+    console.log("🔥 /publish HIT");
+    console.log("BODY RECEIVED:", req.body);
+
     try {
         const { topic, message } = req.body;
 
         if (!topic || !message) {
+            console.log("❌ Missing topic or message");
+
             return res.status(400).json({
                 success: false,
                 error: "Missing topic or message"
@@ -33,24 +39,32 @@ app.post("/publish", (req, res) => {
 
         client.publish(topic, message, { qos: 0 }, (err) => {
             if (err) {
-                console.log("MQTT error:", err);
-                return res.status(500).json({ success: false });
+                console.log("❌ MQTT error:", err);
+
+                return res.status(500).json({
+                    success: false,
+                    error: "MQTT publish failed"
+                });
             }
 
-            console.log("MQTT SENT:", message);
+            console.log("📡 MQTT SENT:", message);
 
-            return res.json({ success: true });
+            return res.json({
+                success: true
+            });
         });
 
     } catch (err) {
-        res.status(500).json({
+        console.log("❌ SERVER ERROR:", err);
+
+        return res.status(500).json({
             success: false,
             error: err.message
         });
     }
 });
 
-// 🚨 RENDER FIX (IMPORTANT)
+// 🚨 RENDER FIX
 const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, "0.0.0.0", () => {
