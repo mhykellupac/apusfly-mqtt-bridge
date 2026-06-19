@@ -14,10 +14,22 @@ client.on("connect", () => {
     console.log("MQTT Connected ✔");
 });
 
+// 🔥 HEALTH CHECK ROUTE (VERY IMPORTANT)
+app.get("/", (req, res) => {
+    res.send("ApusFly MQTT Bridge is running ✔");
+});
+
 // publish endpoint
 app.post("/publish", (req, res) => {
     try {
         const { topic, message } = req.body;
+
+        if (!topic || !message) {
+            return res.status(400).json({
+                success: false,
+                error: "Missing topic or message"
+            });
+        }
 
         client.publish(topic, message, { qos: 0 }, (err) => {
             if (err) {
@@ -38,6 +50,9 @@ app.post("/publish", (req, res) => {
     }
 });
 
-app.listen(3001, () => {
-    console.log("MQTT Bridge running on port 3001");
+// 🚨 RENDER FIX (IMPORTANT)
+const PORT = process.env.PORT || 3001;
+
+app.listen(PORT, "0.0.0.0", () => {
+    console.log("MQTT Bridge running on port", PORT);
 });
